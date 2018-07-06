@@ -5,14 +5,12 @@ output:
     keep_md: yes
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
+
 
 We will start by download the dataactivity file and load it into the df_data data frame:
 
-```{r}
 
+```r
 if (!file.exists('dataactivity.zip')) {
     download.file('https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip',
                   destfile = 'dataactivity.zip')
@@ -23,12 +21,32 @@ if (!file.exists('activity.csv')) {
 
 df_data <- read.csv('activity.csv',sep=',',header=TRUE) 
 df_data$date <- as.Date(df_data$date)
-
 ```
 
 I then calculate the mean total number of steps taken per day
-```{r}
+
+```r
 library(dplyr)
+```
+
+```
+## 
+## Attaching package: 'dplyr'
+```
+
+```
+## The following objects are masked from 'package:stats':
+## 
+##     filter, lag
+```
+
+```
+## The following objects are masked from 'package:base':
+## 
+##     intersect, setdiff, setequal, union
+```
+
+```r
 library(ggplot2)
 
 # Group the data by date and calculate the mean for each date (grouped by)
@@ -47,14 +65,22 @@ ggplot(data=df_mean,aes(date,total)) + geom_histogram(stat='identity',fill='blue
     geom_line(aes(y=median(df_mean$total)),color='green',linetype=6) +
     ggtitle('Total steps by date') +
     labs(y='Total steps')
+```
 
+```
+## Warning: Ignoring unknown parameters: binwidth, bins, pad
+```
+
+![](reproducible_research_project1_files/figure-html/unnamed-chunk-2-1.png)<!-- -->
+
+```r
 #geom_hline(yintercept = mean(df_mean$total),color='LINE1') + 
 #geom_hline(yintercept = median(df_mean$total),linetype=6, aes(color='LINE2')) 
-
 ```
 
 Then I will calculate the daily activity pattern by making a time series plot of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis)
-```{r}
+
+```r
 df_ts <- df_data[complete.cases(df_data),]
 df_ts <- group_by(df_ts,interval)
 df_ts <- summarise(df_ts,average=mean(steps))
@@ -64,19 +90,25 @@ ggplot(data=df_ts,aes(x=interval,y=average)) + geom_line(color='blue') +
     annotate("text",x=df_ts$interval[which(df_ts$average == max(df_ts$average))],y=-5, 
              label=paste('max=',df_ts$interval[which(df_ts$average == max(df_ts$average))]),color='red')+
     ggtitle('Average steps taken per time interval')
-
-
 ```
 
-Next step we will identify missing value and impement a strategy to fill those missing values
-```{r}
+![](reproducible_research_project1_files/figure-html/unnamed-chunk-3-1.png)<!-- -->
 
+Next step we will identify missing value and impement a strategy to fill those missing values
+
+```r
 df_filled <- df_data # Initiate a new Data Frame with df_data
 
 #Calculate the total number of missing values sin the Data set
 int_na <- sum(is.na(df_filled$steps))
 paste('Number of NAs:',int_na)
+```
 
+```
+## [1] "Number of NAs: 2304"
+```
+
+```r
 #Calculate the mean value for steps
 int_meanSteps <- mean(df_filled$steps,na.rm = TRUE)
 
@@ -92,11 +124,17 @@ ggplot(df_summary, aes(x=date,y=total)) + geom_histogram(stat='identity', fill='
     geom_line(aes(y=mean(df_summary$total)),color='red') + geom_line(aes(y=median(df_summary$total)),color='green',linetype=6) +
     ggtitle('Comparing Total steps by date with mean and median') +
     labs(y='total steps')
+```
 
 ```
+## Warning: Ignoring unknown parameters: binwidth, bins, pad
+```
+
+![](reproducible_research_project1_files/figure-html/unnamed-chunk-4-1.png)<!-- -->
 When comparing the 2 histograms I don't see major impact of the NAs value on the overall study.
 Now we are going to check if there are difference in activity patterns between weekdays and weekend.
-```{r}
+
+```r
 #Function used for sapply it will allow to convert weekdays into 2 variables factor
 fun_formatweeks <- function(x) {
     if(x %in% c('Monday','Tuesday','Wednesday','Thursday','Friday')) {
@@ -120,8 +158,9 @@ df_summary <- summarise(df_summary,average=mean(steps))
 ggplot(df_summary, aes(x=interval,y=average, color=weekday2)) + geom_line() + 
 ggtitle('Comparing Average steps per interval for Weekday and Weekend') + 
     labs(y='Average steps', colour='Weekdays')
-
 ```
+
+![](reproducible_research_project1_files/figure-html/unnamed-chunk-5-1.png)<!-- -->
 
 
 
